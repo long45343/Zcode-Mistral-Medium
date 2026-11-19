@@ -23,6 +23,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/long45343/Zcode-Mistral-Medium/internal/images"
 	"github.com/long45343/Zcode-Mistral-Medium/internal/proxy"
 	"github.com/long45343/Zcode-Mistral-Medium/internal/settings"
 )
@@ -52,6 +53,8 @@ func main() {
 		ReasoningRewrite: *rewriteReasoningDefault,
 		Username:         *username,
 		Password:         *password,
+		ImageTrim:        true,
+		MaxImages:        images.DefaultMax,
 	}
 
 	store, err := settings.Open(*configPath, defaults)
@@ -85,6 +88,8 @@ func main() {
 				"reasoning_rewrite": cfg.ReasoningRewrite,
 				"username":          cfg.Username,
 				"password_set":      cfg.Password != "",
+				"image_trim":        cfg.ImageTrim,
+				"max_images":        cfg.MaxImages,
 			})
 		case http.MethodPost:
 			var in struct {
@@ -93,6 +98,8 @@ func main() {
 				ReasoningRewrite bool   `json:"reasoning_rewrite"`
 				Username         string `json:"username"`
 				Password         string `json:"password"`
+				ImageTrim        bool   `json:"image_trim"`
+				MaxImages        int    `json:"max_images"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 				http.Error(w, "invalid JSON", http.StatusBadRequest)
@@ -106,6 +113,13 @@ func main() {
 			next := store.Get()
 			next.BaseURL = base
 			next.ReasoningRewrite = in.ReasoningRewrite
+			next.ImageTrim = in.ImageTrim
+			if in.MaxImages > 0 {
+				next.MaxImages = in.MaxImages
+			}
+			if next.MaxImages <= 0 {
+				next.MaxImages = images.DefaultMax
+			}
 			// An empty key means "keep the current one", so the dashboard never
 			// has to round-trip the secret.
 			if key := strings.TrimSpace(in.APIKey); key != "" {

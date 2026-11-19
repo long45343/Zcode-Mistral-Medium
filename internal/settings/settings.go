@@ -22,6 +22,11 @@ type Settings struct {
 	// remote access entirely.
 	Username string `json:"username"`
 	Password string `json:"password"`
+	// ImageTrim replaces images beyond MaxImages with a text placeholder so a
+	// long session keeps working past the provider's 20-image ceiling.
+	ImageTrim bool `json:"image_trim"`
+	// MaxImages is the ceiling applied when ImageTrim is enabled.
+	MaxImages int `json:"max_images"`
 }
 
 // Store persists settings to a JSON file and serves them concurrency-safely.
@@ -57,6 +62,8 @@ func Open(path string, defaults Settings) (*Store, error) {
 		ReasoningRewrite *bool  `json:"reasoning_rewrite"`
 		Username         string `json:"username"`
 		Password         string `json:"password"`
+		ImageTrim        *bool  `json:"image_trim"`
+		MaxImages        int    `json:"max_images"`
 	}
 	if err := json.Unmarshal(raw, &loaded); err != nil {
 		// A hand-edited file with a typo must not stop the process from
@@ -77,6 +84,12 @@ func Open(path string, defaults Settings) (*Store, error) {
 	}
 	if loaded.Password != "" {
 		s.cur.Password = loaded.Password
+	}
+	if loaded.ImageTrim != nil {
+		s.cur.ImageTrim = *loaded.ImageTrim
+	}
+	if loaded.MaxImages > 0 {
+		s.cur.MaxImages = loaded.MaxImages
 	}
 
 	return s, nil

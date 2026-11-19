@@ -16,8 +16,11 @@ SDK 的客户端只认 `reasoning_summary_text`。
 
 1. 在管理页面配置上游的 BASE URL 和 API KEY
 2. 给 `input` 数组里缺少 `type` 的消息项补上 `"type": "message"`
-3. 转发请求，响应（含 SSE）默认原样透传
-4. 可选：把原始思考事件改写成摘要事件（见下）
+3. 图片超过单请求上限时，把较早的替换成文字占位
+4. 转发请求，响应（含 SSE）默认原样透传
+5. 可选：把原始思考事件改写成摘要事件（见下）
+
+前两项和图片裁剪直接对应上游的几个硬性拒绝，详见各自的章节。
 
 ## License
 
@@ -35,6 +38,28 @@ Mistral 的 Responses 接口对没有 `type` 字段的输入项直接报错：
 它的 content part 是 `output_text`，项本身却没有 `type`，于是必然触发。
 
 已经带 `type` 的项（`function_call`、`function_call_output` 等）不会被改动。
+
+## 图片数量上限
+
+上游对单个请求的图片总数有硬限制，20 张封顶：
+
+```
+400 {"error":{"code":"3051",
+     "message":"Total number of images exceeds the maximum allowed of 20."}}
+```
+
+计数是**整个请求的总数**，消息里的图片和 `function_call_output` 里的图片一起算。
+一个跑久了的会话会不断积累截图，超过 20 张后整条对话就再也发不出去了。
+
+开启「自动裁剪超限图片」后（默认开启），网关保留**最近的** 20 张，更早的替换成
+一行文字占位：
+
+```
+[image omitted: request exceeded the 20-image limit]
+```
+
+文字历史不受影响，模型仍能看到当时发生了什么，只是看不到那张具体的图。上限
+可以通过 `max_images` 配置。
 
 ## 可选的思考过程改写
 

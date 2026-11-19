@@ -309,6 +309,17 @@
     <div class="hint">留空则不修改，至少 4 位</div>
   </div>
 
+  <div class="switch-row">
+    <div class="text">
+      <div class="title">自动裁剪超限图片</div>
+      <div class="desc">上游单个请求最多接受 20 张图片，超了整条请求会被拒绝。开启后把较早的图片替换成文字占位，保留最近的部分。</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="imgtrim">
+      <span class="track"></span>
+    </label>
+  </div>
+
   <div class="actions">
     <button class="button" id="save" type="button">保存</button>
     <span id="msg"></span>
@@ -322,6 +333,10 @@
 
 <script>
 const $ = (id) => document.getElementById(id);
+
+// Kept from the last load so saving other fields never overwrites the ceiling
+// with a hardcoded default.
+let maxImages = 20;
 
 /* ---------- theme ---------- */
 
@@ -377,6 +392,8 @@ async function load() {
     $('base').value = d.base_url || '';
     $('user').value = d.username || '';
     $('rewrite').checked = !!d.reasoning_rewrite;
+    $('imgtrim').checked = !!d.image_trim;
+    if (d.max_images > 0) maxImages = d.max_images;
     $('keyhint').textContent = d.api_key_set
       ? '已保存：' + d.api_key_hint + '（留空保持不变）'
       : '未设置，将直接使用上游转发的密钥';
@@ -415,6 +432,8 @@ async function save() {
       base_url: base,
       api_key: $('key').value.trim(),
       reasoning_rewrite: $('rewrite').checked,
+      image_trim: $('imgtrim').checked,
+      max_images: maxImages,
       username: $('user').value.trim(),
       password: newPassword
     });
@@ -454,7 +473,12 @@ $('rewrite').addEventListener('change', async () => {
   }
 
   try {
-    await post({ base_url: base, api_key: '', reasoning_rewrite: checked });
+    await post({
+      base_url: base, api_key: '',
+      reasoning_rewrite: $('rewrite').checked,
+      image_trim: $('imgtrim').checked,
+      max_images: maxImages
+    });
     $('msg').className = 'ok';
     $('msg').textContent = checked ? '已开启' : '已关闭';
     setTimeout(() => { $('msg').textContent = ''; }, 2000);
@@ -462,6 +486,21 @@ $('rewrite').addEventListener('change', async () => {
     $('rewrite').checked = !checked;
     $('msg').className = 'err';
     $('msg').textContent = '切换失败';
+  }
+});
+
+$('imgtrim').addEventListener('change', async () => {
+  const base = $('base').value.trim();
+  if (!base) { $('imgtrim').checked = !$('imgtrim').checked; return; }
+  try {
+    await post({
+      base_url: base, api_key: '',
+      reasoning_rewrite: $('rewrite').checked,
+      image_trim: $('imgtrim').checked,
+      max_images: maxImages
+    });
+  } catch (e) {
+    $('imgtrim').checked = !$('imgtrim').checked;
   }
 });
 

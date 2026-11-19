@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/long45343/Zcode-Mistral-Medium/internal/images"
 	"github.com/long45343/Zcode-Mistral-Medium/internal/normalize"
 	"github.com/long45343/Zcode-Mistral-Medium/internal/reasoning"
 	"github.com/long45343/Zcode-Mistral-Medium/internal/settings"
@@ -105,6 +106,11 @@ func (s *Server) HandleResponses(w http.ResponseWriter, r *http.Request) {
 
 	body, st := normalize.Rewrite(body)
 
+	var imSt images.Stats
+	if cfg.ImageTrim {
+		body, imSt = images.Trim(body, cfg.MaxImages)
+	}
+
 	ctx, cancel := context.WithTimeout(r.Context(), s.timeout)
 	defer cancel()
 
@@ -141,6 +147,9 @@ func (s *Server) HandleResponses(w http.ResponseWriter, r *http.Request) {
 
 	if st.Changed() {
 		s.logger.Printf("fixed %d message type(s), status=%d bytes=%d", st.Typed, resp.StatusCode, n)
+	}
+	if imSt.Changed() {
+		s.logger.Printf("trimmed images: %s", imSt.Describe())
 	}
 }
 
