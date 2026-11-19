@@ -1,0 +1,90 @@
+event: response.created
+data: {"type":"response.created","response":{"id":"resp_example","model":"example-model","created_at":1700000000},"sequence_number":1}
+
+event: response.in_progress
+data: {"type":"response.in_progress","response":{"id":"resp_example"},"sequence_number":2}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","output_index":0,"item":{"id":"rs_example0000000000000000000000","type":"reasoning","status":"in_progress","content":[],"summary":[],"encrypted_content":null},"sequence_number":3}
+
+event: response.content_part.added
+data: {"type":"response.content_part.added","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"part":{"text":"","type":"reasoning_text"},"sequence_number":4}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"The ","sequence_number":5}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"user ","sequence_number":6}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"greets ","sequence_number":7}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"me. ","sequence_number":8}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"A ","sequence_number":9}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"short ","sequence_number":10}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"reply ","sequence_number":11}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"is ","sequence_number":12}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"enough. ","sequence_number":13}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"I ","sequence_number":14}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"will ","sequence_number":15}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"say ","sequence_number":16}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"hello ","sequence_number":17}
+
+event: response.reasoning_text.delta
+data: {"type":"response.reasoning_text.delta","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"delta":"back.","sequence_number":18}
+
+event: response.reasoning_text.done
+data: {"type":"response.reasoning_text.done","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"text":"The user greets me. A short reply is enough. I will say hello back.","sequence_number":19}
+
+event: response.content_part.done
+data: {"type":"response.content_part.done","item_id":"rs_example0000000000000000000000","output_index":0,"content_index":0,"part":{"text":"The user greets me. A short reply is enough. I will say hello back.","type":"reasoning_text"},"sequence_number":20}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","output_index":0,"item":{"id":"rs_example0000000000000000000000","type":"reasoning","status":"completed","content":[{"type":"reasoning_text","text":"The user greets me. A short reply is enough. I will say hello back."}],"summary":[],"encrypted_content":null},"sequence_number":21}
+
+event: response.output_item.added
+data: {"type":"response.output_item.added","output_index":1,"item":{"id":"msg_example000000000000000000000","type":"message","status":"in_progress","content":[],"role":"assistant"},"sequence_number":22}
+
+event: response.content_part.added
+data: {"type":"response.content_part.added","item_id":"msg_example000000000000000000000","output_index":1,"content_index":0,"part":{"text":"","type":"output_text"},"sequence_number":23}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","item_id":"msg_example000000000000000000000","output_index":1,"content_index":0,"delta":"Hello","sequence_number":24}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","item_id":"msg_example000000000000000000000","output_index":1,"content_index":0,"delta":" there","sequence_number":25}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","item_id":"msg_example000000000000000000000","output_index":1,"content_index":0,"delta":"!","sequence_number":26}
+
+event: response.output_text.done
+data: {"type":"response.output_text.done","item_id":"msg_example000000000000000000000","output_index":1,"content_index":0,"text":"Hello there!","sequence_number":27}
+
+event: response.content_part.done
+data: {"type":"response.content_part.done","item_id":"msg_example000000000000000000000","output_index":1,"content_index":0,"part":{"text":"Hello there!","type":"output_text"},"sequence_number":28}
+
+event: response.output_item.done
+data: {"type":"response.output_item.done","output_index":1,"item":{"id":"msg_example000000000000000000000","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"Hello there!"}]},"sequence_number":29}
+
+event: response.completed
+data: {"type":"response.completed","response":{"id":"resp_example","model":"example-model","status":"completed","usage":{"input_tokens":42,"input_tokens_details":{"cached_tokens":0},"output_tokens":8,"output_tokens_details":{"reasoning_tokens":14},"total_tokens":50}},"sequence_number":30}
+

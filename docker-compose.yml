@@ -1,0 +1,37 @@
+services:
+  zcode-gateway:
+    image: zcode-cache-gateway:latest
+    container_name: zcode-gateway
+    # Host networking so AxonHub (also on host networking) can reach the
+    # gateway at 127.0.0.1:8787 without any extra bridge setup.
+    network_mode: host
+    restart: unless-stopped
+    # Long enough for the gateway to drain in-flight streams on its own
+    # (25s internal budget) before Docker sends SIGKILL.
+    stop_grace_period: 30s
+    volumes:
+      # settings.json holds the provider base URL and API key, written by the
+      # dashboard. Keep this directory out of version control.
+      - ./data:/data
+    # The dashboard can rewrite the upstream URL, so remote access requires a
+    # password. The browser prompts for it; the username is ignored.
+    # Forwarding (/v1/responses) is restricted to loopback separately.
+    command: ["-config", "/data/settings.json", "-username", "admin", "-password", "admin"]
+    environment:
+      - TZ=Asia/Shanghai
+      # The host reaches the provider through the local mihomo proxy.
+      # Point this at whatever proxy the host uses to reach the provider.
+      - HTTPS_PROXY=http://127.0.0.1:7897
+      - HTTP_PROXY=http://127.0.0.1:7897
+      - NO_PROXY=127.0.0.1,localhost,::1
+      # Seeds the base URL on first start; the dashboard can change it later.
+      - UPSTREAM_BASE_URL=https://api.mistral.ai/v1
+      # Retype raw reasoning events into summary events. Needed for clients
+      # built on the Vercel AI SDK (ZCode) to render the thinking process.
+      # Set to 0 to fall back to pure byte passthrough.
+      - REWRITE_REASONING=1
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

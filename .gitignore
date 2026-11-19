@@ -1,0 +1,12 @@
+# Build output
+/gateway
+*.exe
+
+# Local runtime state: the settings file holds the provider API key.
+settings*.json
+/data/
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+*.swp

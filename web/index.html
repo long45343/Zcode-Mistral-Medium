@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zcode-Mistral-Medium</title>
+<script>
+  // Resolve the theme before first paint so there is no flash of the wrong palette.
+  (function () {
+    const saved = localStorage.getItem('gateway-theme') || 'auto';
+    const dark = saved === 'dark' ||
+      (saved === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  })();
+</script>
+<style>
+  /* Material 3 tonal palette, light scheme. */
+  :root[data-theme="light"] {
+    --primary: #6750A4;
+    --on-primary: #FFFFFF;
+    --surface: #FEF7FF;
+    --on-surface: #1D1B20;
+    --surface-container-low: #F7F2FA;
+    --surface-container-high: #ECE6F0;
+    --on-surface-variant: #49454F;
+    --outline: #79747E;
+    --outline-variant: #CAC4D0;
+    --error: #B3261E;
+  }
+
+  /* Material 3 tonal palette, dark scheme. */
+  :root[data-theme="dark"] {
+    --primary: #D0BCFF;
+    --on-primary: #381E72;
+    --surface: #141218;
+    --on-surface: #E6E0E9;
+    --surface-container-low: #1D1B20;
+    --surface-container-high: #2B2930;
+    --on-surface-variant: #CAC4D0;
+    --outline: #938F99;
+    --outline-variant: #49454F;
+    --error: #F2B8B5;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--surface);
+    color: var(--on-surface);
+    font: 15px/1.55 "Roboto", ui-sans-serif, "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background .25s ease, color .25s ease;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--surface-container-low);
+    border-radius: 28px;
+    padding: 28px 28px 24px;
+    transition: background .25s ease;
+  }
+
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 26px;
+  }
+  .titles h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1.3;
+  }
+  .titles p {
+    margin: 6px 0 0;
+    font-size: 13.5px;
+    color: var(--on-surface-variant);
+  }
+
+  /* Material 3 icon button. */
+  .icon-button {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--surface-container-high);
+    color: var(--on-surface-variant);
+    cursor: pointer;
+    transition: background .2s ease, transform .1s ease;
+  }
+  .icon-button:hover { filter: brightness(1.08); }
+  .icon-button:active { transform: scale(.94); }
+  .icon-button svg { width: 20px; height: 20px; display: block; }
+
+  /* Material 3 outlined text field with a floating label. */
+  .field { position: relative; margin-bottom: 18px; }
+  .field input {
+    width: 100%;
+    padding: 19px 16px 9px;
+    background: transparent;
+    color: var(--on-surface);
+    border: 1px solid var(--outline);
+    border-radius: 4px;
+    font: inherit;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: 14px;
+    outline: none;
+    transition: border-color .15s ease;
+  }
+  .field input:hover { border-color: var(--on-surface); }
+  .field input:focus { border: 2px solid var(--primary); padding: 18px 15px 8px; }
+  .field label {
+    position: absolute;
+    left: 12px;
+    top: 15px;
+    padding: 0 4px;
+    background: var(--surface-container-low);
+    color: var(--on-surface-variant);
+    font-size: 14px;
+    pointer-events: none;
+    transition: top .15s ease, font-size .15s ease, color .15s ease;
+  }
+  .field input:focus + label,
+  .field input:not(:placeholder-shown) + label {
+    top: -7px;
+    font-size: 11.5px;
+    color: var(--primary);
+  }
+  .hint {
+    margin: 8px 2px 0;
+    font-size: 12px;
+    color: var(--on-surface-variant);
+  }
+
+  /* Material 3 switch. */
+  .switch-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 4px 0 22px;
+  }
+  .switch-row .text { flex: 1; }
+  .switch-row .title { font-size: 15px; }
+  .switch-row .desc {
+    margin-top: 4px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--on-surface-variant);
+  }
+  .switch {
+    position: relative;
+    flex: 0 0 auto;
+    width: 52px;
+    height: 32px;
+    margin-top: 2px;
+  }
+  .switch input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .track {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: var(--surface-container-high);
+    border: 2px solid var(--outline);
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease;
+  }
+  .track::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--outline);
+    transform: translateY(-50%);
+    transition: transform .2s ease, background .2s ease, width .2s ease, height .2s ease;
+  }
+  .switch input:checked + .track {
+    background: var(--primary);
+    border-color: var(--primary);
+  }
+  .switch input:checked + .track::before {
+    width: 24px;
+    height: 24px;
+    left: 2px;
+    background: var(--on-primary);
+    transform: translate(20px, -50%);
+  }
+
+  /* Material 3 filled button. */
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 4px;
+  }
+  .button {
+    border: none;
+    border-radius: 999px;
+    padding: 11px 26px;
+    background: var(--primary);
+    color: var(--on-primary);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity .15s ease, transform .1s ease;
+  }
+  .button:hover { opacity: .9; }
+  .button:active { transform: scale(.97); }
+  .button:disabled { opacity: .45; cursor: default; transform: none; }
+
+  #msg { font-size: 13px; }
+  #msg.ok { color: var(--primary); }
+  #msg.err { color: var(--error); }
+
+  .section-title {
+    margin: 26px 0 16px;
+    padding-top: 22px;
+    border-top: 1px solid var(--outline-variant);
+    font-size: 12px;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--on-surface-variant);
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid var(--outline-variant);
+    font-size: 12.5px;
+    color: var(--on-surface-variant);
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--error);
+    flex: 0 0 auto;
+  }
+  .dot.on { background: var(--primary); }
+</style>
+</head>
+<body>
+<div class="card">
+  <header>
+    <div class="titles">
+      <h1>Zcode-Mistral-Medium</h1>
+      <p>上游配置 · 请求补齐 message 类型后转发</p>
+    </div>
+    <button class="icon-button" id="theme" type="button" aria-label="切换主题" title="切换主题"></button>
+  </header>
+
+  <div class="field">
+    <input id="base" type="text" spellcheck="false" placeholder=" ">
+    <label for="base">BASE URL</label>
+    <div class="hint">转发目标为 <span id="preview">…</span></div>
+  </div>
+
+  <div class="field">
+    <input id="key" type="password" spellcheck="false" autocomplete="new-password" placeholder=" ">
+    <label for="key">API KEY</label>
+    <div class="hint" id="keyhint">未设置，将直接使用上游转发的密钥</div>
+  </div>
+
+  <div class="switch-row">
+    <div class="text">
+      <div class="title">显示思考过程</div>
+      <div class="desc">把原始思考事件改写成摘要事件。部分客户端需要打开才能显示思考内容，关闭时走纯字节转发。</div>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="rewrite">
+      <span class="track"></span>
+    </label>
+  </div>
+
+  <div class="section-title">登录凭据</div>
+
+  <div class="field">
+    <input id="user" type="text" spellcheck="false" autocomplete="username" placeholder=" ">
+    <label for="user">用户名</label>
+  </div>
+
+  <div class="field">
+    <input id="pass" type="password" spellcheck="false" autocomplete="new-password" placeholder=" ">
+    <label for="pass">新密码</label>
+    <div class="hint">留空则不修改，至少 4 位</div>
+  </div>
+
+  <div class="actions">
+    <button class="button" id="save" type="button">保存</button>
+    <span id="msg"></span>
+  </div>
+
+  <div class="status">
+    <span class="dot" id="dot"></span>
+    <span id="status">检查中…</span>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+/* ---------- theme ---------- */
+
+const THEME_KEY = 'gateway-theme';
+const ORDER = ['auto', 'light', 'dark'];
+const ICONS = {
+  auto: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2v16a8 8 0 0 1 0-16Z"/></svg>',
+  light: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0-5a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm0 16a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0v-2a1 1 0 0 1 1-1ZM4.2 4.2a1 1 0 0 1 1.4 0L7 5.6A1 1 0 0 1 5.6 7L4.2 5.6a1 1 0 0 1 0-1.4Zm12 12a1 1 0 0 1 1.4 0l1.4 1.4a1 1 0 0 1-1.4 1.4l-1.4-1.4a1 1 0 0 1 0-1.4ZM2 12a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1Zm16 0a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2h-2a1 1 0 0 1-1-1ZM4.2 19.8a1 1 0 0 1 0-1.4L5.6 17A1 1 0 0 1 7 18.4l-1.4 1.4a1 1 0 0 1-1.4 0Zm12-12a1 1 0 0 1 0-1.4L17.6 5A1 1 0 0 1 19 6.4l-1.4 1.4a1 1 0 0 1-1.4 0Z"/></svg>',
+  dark: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.3 2.1a9.9 9.9 0 0 0-1.6 19.7 1 1 0 0 0 .5-1.9 8 8 0 1 1 10-10 1 1 0 0 0 1.9-.5A9.9 9.9 0 0 0 12.3 2.1Z"/></svg>'
+};
+
+function currentTheme() {
+  return localStorage.getItem(THEME_KEY) || 'auto';
+}
+
+function applyTheme(mode) {
+  const dark = mode === 'dark' ||
+    (mode === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  $('theme').innerHTML = ICONS[mode];
+  $('theme').title = mode === 'auto' ? '跟随系统' : mode === 'light' ? '浅色' : '深色';
+}
+
+$('theme').addEventListener('click', () => {
+  const next = ORDER[(ORDER.indexOf(currentTheme()) + 1) % ORDER.length];
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+});
+
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (currentTheme() === 'auto') applyTheme('auto');
+});
+
+applyTheme(currentTheme());
+
+/* ---------- settings ---------- */
+
+function updatePreview() {
+  const v = $('base').value.trim().replace(/\/+$/, '');
+  $('preview').textContent = v ? v + '/responses' : '…';
+}
+
+function setStatus(configured) {
+  $('dot').className = 'dot' + (configured ? ' on' : '');
+  $('status').textContent = configured ? '已配置，正在转发' : '未配置，请求会被拒绝';
+}
+
+async function load() {
+  try {
+    const res = await fetch('/api/settings', { cache: 'no-store' });
+    if (!res.ok) throw new Error(await res.text());
+    const d = await res.json();
+    $('base').value = d.base_url || '';
+    $('user').value = d.username || '';
+    $('rewrite').checked = !!d.reasoning_rewrite;
+    $('keyhint').textContent = d.api_key_set
+      ? '已保存：' + d.api_key_hint + '（留空保持不变）'
+      : '未设置，将直接使用上游转发的密钥';
+    setStatus(!!d.base_url);
+    updatePreview();
+  } catch (e) {
+    $('msg').className = 'err';
+    $('msg').textContent = '读取配置失败';
+  }
+}
+
+async function post(payload) {
+  const res = await fetch('/api/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+async function save() {
+  const base = $('base').value.trim();
+  if (!base) {
+    $('msg').className = 'err';
+    $('msg').textContent = '请填写 BASE URL';
+    return;
+  }
+
+  $('save').disabled = true;
+  $('msg').textContent = '';
+
+  try {
+    const newPassword = $('pass').value;
+
+    await post({
+      base_url: base,
+      api_key: $('key').value.trim(),
+      reasoning_rewrite: $('rewrite').checked,
+      username: $('user').value.trim(),
+      password: newPassword
+    });
+
+    $('key').value = '';
+    $('pass').value = '';
+    $('msg').className = 'ok';
+
+    if (newPassword) {
+      // The browser cached the old credentials; the next request will prompt.
+      $('msg').textContent = '已保存，请用新密码重新登录';
+    } else {
+      $('msg').textContent = '已保存';
+      setTimeout(() => { $('msg').textContent = ''; }, 2500);
+    }
+
+    await load();
+  } catch (e) {
+    $('msg').className = 'err';
+    $('msg').textContent = '保存失败';
+  } finally {
+    $('save').disabled = false;
+  }
+}
+
+// Toggling saves on its own with an empty api_key, so a half-typed key in the
+// box is never submitted and the stored secret stays as it is.
+$('rewrite').addEventListener('change', async () => {
+  const base = $('base').value.trim();
+  const checked = $('rewrite').checked;
+
+  if (!base) {
+    $('msg').className = 'err';
+    $('msg').textContent = '请先填写 BASE URL';
+    $('rewrite').checked = !checked;
+    return;
+  }
+
+  try {
+    await post({ base_url: base, api_key: '', reasoning_rewrite: checked });
+    $('msg').className = 'ok';
+    $('msg').textContent = checked ? '已开启' : '已关闭';
+    setTimeout(() => { $('msg').textContent = ''; }, 2000);
+  } catch (e) {
+    $('rewrite').checked = !checked;
+    $('msg').className = 'err';
+    $('msg').textContent = '切换失败';
+  }
+});
+
+$('base').addEventListener('input', updatePreview);
+$('save').addEventListener('click', save);
+$('key').addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
+
+load();
+</script>
+</body>
+</html>

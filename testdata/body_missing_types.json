@@ -1,0 +1,84 @@
+{
+  "model": "example-model",
+  "input": [
+    {
+      "role": "system",
+      "content": "You are a helpful assistant."
+    },
+    {
+      "role": "system",
+      "content": "Answer concisely."
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Hello, how are you?"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "I am well, thanks."
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Run the demo tool."
+        }
+      ]
+    },
+    {
+      "type": "function_call",
+      "call_id": "call_demo_1",
+      "name": "demo",
+      "arguments": "{\"value\":1}"
+    },
+    {
+      "type": "function_call_output",
+      "call_id": "call_demo_1",
+      "output": "ok"
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "input_text",
+          "text": "Thanks."
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "name": "demo",
+      "description": "A demo tool.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      }
+    }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "reasoning": {
+    "effort": "high"
+  },
+  "max_output_tokens": 256
+}

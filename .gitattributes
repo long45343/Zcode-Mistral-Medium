@@ -1,0 +1,4 @@
+# Keep the working tree and the repository byte-identical for text files.
+# The SSE fixture in particular must keep bare LF: frames are terminated by
+# "\n\n", so a CRLF conversion would break the replay tests.
+* text=auto eol=lf
