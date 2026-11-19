@@ -14,6 +14,7 @@ import (
 
 	"github.com/long45343/Zcode-Mistral-Medium/internal/images"
 	"github.com/long45343/Zcode-Mistral-Medium/internal/normalize"
+	"github.com/long45343/Zcode-Mistral-Medium/internal/notify"
 	"github.com/long45343/Zcode-Mistral-Medium/internal/reasoning"
 	"github.com/long45343/Zcode-Mistral-Medium/internal/settings"
 )
@@ -140,7 +141,14 @@ func (s *Server) HandleResponses(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(resp.StatusCode)
 
-	n, copyErr := s.pipe(w, resp.Body, cfg.ReasoningRewrite)
+	// Advise the caller when the request is close to the image ceiling, so the
+	// next turn does not fail without warning.
+	var advisory *notify.Injector
+	if warnAt := warnThreshold(cfg); warnAt > 0 && imSt.Found >= warnAt {
+		advisory = notify.New(true, notify.BuildMessage(imSt.Found, cfg.MaxImages))
+	}
+
+	n, copyErr := s.pipe(w, resp.Body, cfg.ReasoningRewrite, advisory)
 	if copyErr != nil {
 		s.logger.Printf("stream interrupted after %d bytes: %v", n, copyErr)
 	}
@@ -159,7 +167,7 @@ func (s *Server) HandleResponses(w http.ResponseWriter, r *http.Request) {
 // When reasoning rewriting is enabled the bytes pass through an SSE frame
 // buffer first, so an event split across reads is reassembled before it is
 // inspected.
-func (s *Server) pipe(w http.ResponseWriter, src io.Reader, rewriteReasoning bool) (int64, error) {
+func (s *Server) pipe(w http.ResponseWriter, src io.Reader, rewriteReasoning bool, advisory *notify.Injector) (int64, error) {
 	flusher, _ := w.(http.Flusher)
 
 	var rewriter *reasoning.Rewriter
@@ -190,6 +198,9 @@ func (s *Server) pipe(w http.ResponseWriter, src io.Reader, rewriteReasoning boo
 			if rewriter != nil {
 				out = rewriter.Write(out)
 			}
+			if advisory != nil {
+				out = advisory.Write(out)
+			}
 			written += int64(len(out))
 			if err := write(out); err != nil {
 				return written, err
@@ -198,12 +209,21 @@ func (s *Server) pipe(w http.ResponseWriter, src io.Reader, rewriteReasoning boo
 		if readErr != nil {
 			if rewriter != nil {
 				tail := rewriter.Flush()
+				if advisory != nil {
+					tail = append(tail, advisory.Flush()...)
+				}
 				written += int64(len(tail))
 				if err := write(tail); err != nil {
 					return written, err
 				}
 				if st := rewriter.Stats(); st.Changed() {
 					s.logger.Printf("rewrote reasoning stream: %d deltas, %d parts", st.Deltas, st.Parts)
+				}
+			} else if advisory != nil {
+				tail := advisory.Flush()
+				written += int64(len(tail))
+				if err := write(tail); err != nil {
+					return written, err
 				}
 			}
 			if readErr == io.EOF {
@@ -221,6 +241,26 @@ func copyHeaders(dst, src http.Header) {
 			dst.Add(k, v)
 		}
 	}
+}
+
+// warnThreshold resolves when to advise the caller about image pressure.
+// Zero disables the advisory.
+func warnThreshold(cfg settings.Settings) int {
+	if !cfg.ImageTrim {
+		return 0
+	}
+	if cfg.ImageWarnAt > 0 {
+		return cfg.ImageWarnAt
+	}
+	limit := cfg.MaxImages
+	if limit <= 0 {
+		limit = images.DefaultMax
+	}
+	if limit < 3 {
+		return 0
+	}
+	// Default: two images below the ceiling, so there is room to react.
+	return limit - 2
 }
 
 // IsLoopback reports whether the request came from the local machine.

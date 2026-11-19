@@ -90,6 +90,7 @@ func main() {
 				"password_set":      cfg.Password != "",
 				"image_trim":        cfg.ImageTrim,
 				"max_images":        cfg.MaxImages,
+				"image_warn_at":     cfg.ImageWarnAt,
 			})
 		case http.MethodPost:
 			var in struct {
@@ -100,6 +101,7 @@ func main() {
 				Password         string `json:"password"`
 				ImageTrim        bool   `json:"image_trim"`
 				MaxImages        int    `json:"max_images"`
+				ImageWarnAt      int    `json:"image_warn_at"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 				http.Error(w, "invalid JSON", http.StatusBadRequest)
@@ -119,6 +121,10 @@ func main() {
 			}
 			if next.MaxImages <= 0 {
 				next.MaxImages = images.DefaultMax
+			}
+			next.ImageWarnAt = in.ImageWarnAt
+			if next.ImageWarnAt < 0 {
+				next.ImageWarnAt = 0
 			}
 			// An empty key means "keep the current one", so the dashboard never
 			// has to round-trip the secret.

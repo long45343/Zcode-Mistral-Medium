@@ -27,6 +27,9 @@ type Settings struct {
 	ImageTrim bool `json:"image_trim"`
 	// MaxImages is the ceiling applied when ImageTrim is enabled.
 	MaxImages int `json:"max_images"`
+	// ImageWarnAt appends an advisory to the response once the request carries
+	// this many images. Zero derives it from MaxImages.
+	ImageWarnAt int `json:"image_warn_at"`
 }
 
 // Store persists settings to a JSON file and serves them concurrency-safely.
@@ -64,6 +67,7 @@ func Open(path string, defaults Settings) (*Store, error) {
 		Password         string `json:"password"`
 		ImageTrim        *bool  `json:"image_trim"`
 		MaxImages        int    `json:"max_images"`
+		ImageWarnAt      int    `json:"image_warn_at"`
 	}
 	if err := json.Unmarshal(raw, &loaded); err != nil {
 		// A hand-edited file with a typo must not stop the process from
@@ -90,6 +94,9 @@ func Open(path string, defaults Settings) (*Store, error) {
 	}
 	if loaded.MaxImages > 0 {
 		s.cur.MaxImages = loaded.MaxImages
+	}
+	if loaded.ImageWarnAt > 0 {
+		s.cur.ImageWarnAt = loaded.ImageWarnAt
 	}
 
 	return s, nil
